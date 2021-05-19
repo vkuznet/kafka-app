@@ -31,10 +31,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
 # start kafka
-../docker-compose ps
-../docker-compose down
-../docker-compose up -d
-../docker-compose ps
+docker-compose ps
+docker-compose down
+docker-compose up -d
+docker-compose ps
           Name                        Command               State                           Ports
 --------------------------------------------------------------------------------------------------------------------------
 kafka-docker_kafka_1       start-kafka.sh                   Up      0.0.0.0:9094->9094/tcp,:::9094->9094/tcp
@@ -42,14 +42,16 @@ kafka-docker_zookeeper_1   /bin/sh -c /usr/sbin/sshd  ...   Up      0.0.0.0:2181
                                                                     2888/tcp, 3888/tcp
 
 # get logs
-../docker-compose logs
+docker-compose logs
 
 # view existing topics with kafkacat
 # see https://github.com/edenhill/kafkacat
 docker run -it --network=host edenhill/kafkacat:1.6.0 -b localhost:9094 -L
 
 # run client
-cd ../kafka-app
+cd ..
+git clone git@github.com:vkuznet/kafka-app.git
+cd kafka-app
 go build
 ./kafka-app
 ```
