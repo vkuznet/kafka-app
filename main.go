@@ -27,6 +27,15 @@ func produce(ctx context.Context) {
 		//         Brokers: []string{broker1Address, broker2Address, broker3Address},
 		Brokers: []string{broker0Address},
 		Topic:   topic,
+		// wait until we get 10 messages before writing
+		// if we want to send messages immediately set it to 1
+		BatchSize: 10,
+		// no matter what happens, write all pending messages
+		// every 2 seconds
+		BatchTimeout: 2 * time.Second,
+		// can be set to -1, 0, or 1
+		// 1 is a good default for most non-transactional data
+		RequiredAcks: 1,
 	})
 
 	for {
@@ -56,9 +65,16 @@ func consume(ctx context.Context) {
 	// it from receiving duplicate messages
 	r := kafka.NewReader(kafka.ReaderConfig{
 		//         Brokers: []string{broker1Address, broker2Address, broker3Address},
-		Brokers: []string{broker0Address},
-		Topic:   topic,
-		GroupID: "my-group",
+		Brokers:  []string{broker0Address},
+		Topic:    topic,
+		GroupID:  "my-group",
+		MinBytes: 5,
+		MaxBytes: 1e6,
+		// wait for at most 3 seconds before receiving new data
+		MaxWait: 3 * time.Second,
+		// this will start consuming messages from the earliest available
+		StartOffset: kafka.FirstOffset,
+		// if you set it to `kafka.LastOffset` it will only consume new messages
 	})
 	for {
 		// the `ReadMessage` method blocks until we receive the next event
