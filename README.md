@@ -53,7 +53,12 @@ cd ..
 git clone git@github.com:vkuznet/kafka-app.git
 cd kafka-app
 go build
+# we'll start our app which produce and consume messages on topic ("test")
+# and using broker address localhost:9094
 ./kafka-app
+
+# if we want we can consume messages using kafka CLI
+docker run -it --network=host edenhill/kafkacat:1.6.0 -b localhost:9094 -C -t test -e -J
 ```
 
 ### References
@@ -61,4 +66,5 @@ go build
 - [Docker compose](https://docs.docker.com/compose/install/)
 - [Kafka docker](https://github.com/wurstmeister/kafka-docker)
 - [Kafka local setup](https://www.kimsereylam.com/kafka/docker/2020/10/16/setup-local-kafka-with-docker.html)
+- [Kafka CLI](https://kimsereylam.com/kafka/2020/03/27/kafkacat-the-cli-for-kafka.html)
 - [Go client](https://www.sohamkamani.com/golang/working-with-kafka/)
