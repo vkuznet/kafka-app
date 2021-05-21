@@ -82,7 +82,7 @@ func consume(ctx context.Context, brokers []string, topic, group string) {
 }
 
 // helper function to process messages from kafka
-func process(ctx context.Context, brokers []string, sendTopic, receiveTopic, group, alg string, verbose int) {
+func process(ctx context.Context, brokers []string, receiveTopic, sendTopic, group, alg string, verbose int) {
 	// initialize a new reader with the brokers and receive topic
 	// the groupID identifies the consumer and prevents
 	// it from receiving duplicate messages
