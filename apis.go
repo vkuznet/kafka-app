@@ -83,6 +83,7 @@ func consume(ctx context.Context, brokers []string, topic, group string) {
 
 // helper function to process messages from kafka
 func process(ctx context.Context, brokers []string, receiveTopic, sendTopic, group, alg string, verbose int) {
+	log.Printf("Process data with %v receiveTopic=%s sendTopic=%s, group=%s algorithm=%s", brokers, receiveTopic, sendTopic, group, alg)
 	// initialize a new reader with the brokers and receive topic
 	// the groupID identifies the consumer and prevents
 	// it from receiving duplicate messages
@@ -98,7 +99,7 @@ func process(ctx context.Context, brokers []string, receiveTopic, sendTopic, gro
 		StartOffset: kafka.FirstOffset,
 		// if you set it to `kafka.LastOffset` it will only consume new messages
 	})
-	log.Println("kafka reader", r)
+	log.Printf("reader config %+v", r.Config())
 
 	// intialize the writer with the broker addresses, and the send topic
 	var w *kafka.Writer
@@ -133,10 +134,13 @@ func process(ctx context.Context, brokers []string, receiveTopic, sendTopic, gro
 		}
 
 		// anonimise our data
-		data, err := anonimise(alg, sendTopic, msg.Value)
+		data, err := anonimise(alg, receiveTopic, msg.Value)
 		if err != nil {
 			log.Println("fail to anonimise the data", err)
 			continue
+		}
+		if verbose > 1 {
+			log.Println("anonimised record", string(data))
 		}
 		// if we have a writer we'll send our data
 		if w != nil {
