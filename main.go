@@ -90,7 +90,7 @@ func consume(ctx context.Context) {
 
 func main() {
 	var config string
-	flag.StringVar(&config, "config", "config.json", "dbs2go config file")
+	flag.StringVar(&config, "config", "config.json", "config file")
 	flag.Parse()
 
 	log.SetFlags(0)
@@ -100,6 +100,8 @@ func main() {
 	// produce messages in a new go routine, since
 	// both the produce and consume functions are
 	// blocking
-	go produce(ctx)
+	if Config.Produce {
+		go produce(ctx)
+	}
 	consume(ctx)
 }

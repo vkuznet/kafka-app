@@ -10,6 +10,7 @@ type Configuration struct {
 	Topic   string   `json:"topic"`   // kafka topic
 	Group   string   `json:"groupID"` // kafka group
 	Brokers []string `json:"brokers"` // kafka brokers
+	Produce bool     `json:"produce"` // produce random messages
 }
 
 // global variables
