@@ -2,22 +2,20 @@ package main
 
 import (
 	"context"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
+	"encoding/hex"
+	"encoding/json"
 	"flag"
+	"hash"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	kafka "github.com/segmentio/kafka-go"
 )
-
-// the topic and broker address are initialized as constants
-// const (
-//     topic          = "test"
-//     broker0Address = "localhost:9094"
-//     broker1Address = "localhost:9093"
-//     broker2Address = "localhost:9094"
-//     broker3Address = "localhost:9095"
-// )
 
 func produce(ctx context.Context) {
 	// initialize a counter
@@ -25,7 +23,6 @@ func produce(ctx context.Context) {
 
 	// intialize the writer with the broker addresses, and the topic
 	w := kafka.NewWriter(kafka.WriterConfig{
-		//         Brokers: []string{broker1Address, broker2Address, broker3Address},
 		Brokers: Config.Brokers,
 		Topic:   Config.Topic,
 		// wait until we get 10 messages before writing
@@ -65,7 +62,6 @@ func consume(ctx context.Context) {
 	// the groupID identifies the consumer and prevents
 	// it from receiving duplicate messages
 	r := kafka.NewReader(kafka.ReaderConfig{
-		//         Brokers: []string{broker1Address, broker2Address, broker3Address},
 		Brokers:  Config.Brokers,
 		Topic:    Config.Topic,
 		GroupID:  Config.Group,
@@ -85,7 +81,34 @@ func consume(ctx context.Context) {
 		}
 		// after receiving the message, log its value
 		log.Println("received: ", string(msg.Value))
+		// convert message to our struct
+		var rec CMSSWRecord
+		err = json.Unmarshal(msg.Value, &rec)
+		if err != nil {
+			log.Println("unable to convert message to struct", err)
+		}
+		rec.Data.UserDN = hashFunc(rec.Data.UserDN)
+		data, err := json.Marshal(rec)
+		if err != nil {
+			log.Println("unable to marshal the record", err)
+		}
+		log.Println("new record: ", string(data))
 	}
+}
+
+// helper function t convert given value to a hash one
+func hashFunc(val string) string {
+	var h hash.Hash
+	sha := strings.ToLower(Config.SHA)
+	if sha == "sha256" {
+		h = sha256.New()
+	} else if sha == "sha512" {
+		h = sha512.New()
+	} else {
+		h = sha1.New()
+	}
+	h.Write([]byte(val))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func main() {
