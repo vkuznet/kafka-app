@@ -92,9 +92,14 @@ func main() {
 	var config string
 	flag.StringVar(&config, "config", "config.json", "config file")
 	flag.Parse()
-
 	log.SetFlags(0)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	err := ParseConfig(config)
+	if err != nil {
+		log.Fatalf("fail to parse config file %v", err)
+	}
+
+	log.Println("config", Config.String())
 	// create a new context
 	ctx := context.Background()
 	// produce messages in a new go routine, since
