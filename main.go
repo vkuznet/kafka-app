@@ -24,7 +24,7 @@ func produce(ctx context.Context) {
 	// intialize the writer with the broker addresses, and the topic
 	w := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: Config.Brokers,
-		Topic:   Config.Topic,
+		Topic:   Config.SendTopic,
 		// wait until we get 10 messages before writing
 		// if we want to send messages immediately set it to 1
 		BatchSize: 10,
@@ -58,12 +58,12 @@ func produce(ctx context.Context) {
 }
 
 func consume(ctx context.Context) {
-	// initialize a new reader with the brokers and topic
+	// initialize a new reader with the brokers and receive topic
 	// the groupID identifies the consumer and prevents
 	// it from receiving duplicate messages
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  Config.Brokers,
-		Topic:    Config.Topic,
+		Topic:    Config.ReceiveTopic,
 		GroupID:  Config.Group,
 		MinBytes: 5,
 		MaxBytes: 1e6,
@@ -73,26 +73,61 @@ func consume(ctx context.Context) {
 		StartOffset: kafka.FirstOffset,
 		// if you set it to `kafka.LastOffset` it will only consume new messages
 	})
+	log.Println("kafak reader", r)
+
+	// intialize the writer with the broker addresses, and the send topic
+	var w *kafka.Writer
+	if Config.SendTopic != "" {
+		w = kafka.NewWriter(kafka.WriterConfig{
+			Brokers: Config.Brokers,
+			Topic:   Config.SendTopic,
+			// wait until we get 10 messages before writing
+			// if we want to send messages immediately set it to 1
+			BatchSize: 10,
+			// no matter what happens, write all pending messages
+			// every 2 seconds
+			BatchTimeout: 2 * time.Second,
+			// can be set to -1, 0, or 1
+			// 1 is a good default for most non-transactional data
+			RequiredAcks: 1,
+		})
+	}
+	// initialize a counter
+	i := 0
+
 	for {
 		// the `ReadMessage` method blocks until we receive the next event
 		msg, err := r.ReadMessage(ctx)
 		if err != nil {
-			panic("could not read message " + err.Error())
+			log.Println("could not read message " + err.Error())
+			continue
 		}
-		// after receiving the message, log its value
 		log.Println("received: ", string(msg.Value))
-		// convert message to our struct
-		var rec CMSSWRecord
-		err = json.Unmarshal(msg.Value, &rec)
-		if err != nil {
-			log.Println("unable to convert message to struct", err)
+		// after receiving the message, log its value
+		if Config.ReceiveTopic == "cmssw_pop_raw_metric" {
+			// convert message to our struct
+			var rec CMSSWRecord
+			err = json.Unmarshal(msg.Value, &rec)
+			if err != nil {
+				log.Println("unable to convert message to struct", err)
+			}
+			rec.Data.UserDN = hashFunc(rec.Data.UserDN)
+			data, err := json.Marshal(rec)
+			if err != nil {
+				log.Println("unable to marshal the record", err)
+			}
+			log.Println("new record: ", string(data))
+			if Config.SendTopic != "" {
+				key := []byte(strconv.Itoa(i))
+				err := w.WriteMessages(ctx, kafka.Message{Key: key, Value: data})
+				if err != nil {
+					log.Println("could not write message " + err.Error())
+				} else {
+					log.Println("send message", i)
+					i++ // increment counter if we send successful message
+				}
+			}
 		}
-		rec.Data.UserDN = hashFunc(rec.Data.UserDN)
-		data, err := json.Marshal(rec)
-		if err != nil {
-			log.Println("unable to marshal the record", err)
-		}
-		log.Println("new record: ", string(data))
 	}
 }
 

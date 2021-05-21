@@ -7,11 +7,12 @@ import (
 )
 
 type Configuration struct {
-	Topic   string   `json:"topic"`   // kafka topic
-	Group   string   `json:"groupID"` // kafka group
-	Brokers []string `json:"brokers"` // kafka brokers
-	Produce bool     `json:"produce"` // produce random messages
-	SHA     string   `json:"sha"`     // sha version to use, e.g. sha1, sha256, sha512
+	SendTopic    string   `json:"send_topic"`    // kafka topic to send data
+	ReceiveTopic string   `json:"receive_topic"` // kafka topic to receive data
+	Group        string   `json:"group"`         // kafka group
+	Brokers      []string `json:"brokers"`       // kafka brokers
+	Produce      bool     `json:"produce"`       // produce random messages
+	SHA          string   `json:"sha"`           // sha version to use, e.g. sha1, sha256, sha512
 }
 
 // global variables
