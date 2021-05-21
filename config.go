@@ -11,6 +11,7 @@ type Configuration struct {
 	Group   string   `json:"groupID"` // kafka group
 	Brokers []string `json:"brokers"` // kafka brokers
 	Produce bool     `json:"produce"` // produce random messages
+	SHA     string   `json:"sha"`     // sha version to use, e.g. sha1, sha256, sha512
 }
 
 // global variables
