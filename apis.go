@@ -172,6 +172,14 @@ func anonimise(alg, topic string, val []byte) ([]byte, error) {
 			dn := v.(string)
 			rec.Data["user_dn"] = hashFunc(dn, alg)
 		}
+	} else if topic == "condor_raw_metric" {
+		// AffiliationCountry, AffiliationInstitute, user DNs
+	} else if topic == "xrootd_raw_gled" {
+		// user DN
+	} else if topic == "eoscmsquotas_raw" {
+		// user name from data.path
+	} else if topic == "wmarchive_raw_metric" {
+		// user name from task name
 	}
 	data, err = json.Marshal(rec)
 	return data, err
