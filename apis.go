@@ -161,15 +161,18 @@ func process(ctx context.Context, brokers []string, receiveTopic, sendTopic, gro
 func anonimise(alg, topic string, val []byte) ([]byte, error) {
 	var data []byte
 	var err error
-	// after receiving the message, log its value
-	if topic == "cmssw_pop_raw_metric" {
-		var rec CMSSWRecord
-		err = json.Unmarshal(val, &rec)
-		if err != nil {
-			return data, err
-		}
-		rec.Data.UserDN = hashFunc(rec.Data.UserDN, alg)
-		data, err = json.Marshal(rec)
+	var rec HDFSRecord
+	err = json.Unmarshal(val, &rec)
+	if err != nil {
+		return data, err
 	}
+	// implement anonimise logic based on given topic
+	if topic == "cmssw_pop_raw_metric" {
+		if v, ok := rec.Data["user_dn"]; ok {
+			dn := v.(string)
+			rec.Data["user_dn"] = hashFunc(dn, alg)
+		}
+	}
+	data, err = json.Marshal(rec)
 	return data, err
 }
